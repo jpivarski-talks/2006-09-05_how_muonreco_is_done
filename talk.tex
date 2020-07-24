@@ -1,0 +1,212 @@
+\documentclass[12pt,compress]{beamer}
+\usepackage{ifthen,hyperref}
+
+\title{How Muon Reconstruction is Done}
+\author{Jim Pivarski}
+\institute{Texas A\&M University}
+\date{6 September, 2006}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{headline}{\includegraphics[height=1 cm]{cmslogo} \hspace{0.1 cm} \includegraphics[height=1 cm]{tamulogo} \hfill
+\begin{minipage}{9 cm}
+\vspace{-0.75 cm} \small
+\begin{center}
+\ifthenelse{\equal{\insertpagenumber}{0}}{}{\insertsection}
+\end{center}
+\end{minipage} \hfill
+\begin{minipage}{1 cm}
+\vspace{-0.75 cm} \small
+\begin{center}
+\ifthenelse{\equal{\insertpagenumber}{0}}{}{\insertpagenumber/\pageref{numpages}}
+\end{center}
+\end{minipage}}
+
+\xdefinecolor{verylightgray}{rgb}{0.95,0.95,0.95}
+\beamertemplateshadingbackground{verylightgray}{white}
+
+\begin{document}
+\addtocounter{page}{-1}
+\frame{\titlepage}
+\section*{Muon Reconstruction --- Jim Pivarski}
+
+\begin{frame}
+\frametitle{The Procedure}
+\begin{enumerate}
+\item Translate raw data into Digis, Digis into RecHits
+\item Resolve left/right ambiguity
+\item Construct segments
+\item Fit to a ``stand-alone'' muon track
+\item Do all silicon tracking
+\item Match silicon-only tracks with muon-only tracks
+\item Combine the fits, present reco::Muon
+\end{enumerate}
+
+\vfill
+\textcolor{darkgray}{Stand-alone muons are probably {\it not} used to seed silicon track-finding.}
+
+%% \vfill
+%% \begin{minipage}{\linewidth}
+%% \scriptsize \textcolor{darkgray}{(There's no good reason to do it: if you
+%% reconstruct a 12-layer muon track, there's no reason to confirm it in
+%% the silicon before deciding to keep the event.  The situation is
+%% different for electrons.)}
+%% \end{minipage}
+
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\includegraphics[width=0.8\linewidth]{muonreco.png}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Local Reconstruction}
+Drift tubes (DT) and Cathode Strip Chambers (CSC) are reconstructed independently.
+
+\begin{center}
+\includegraphics[width=0.7\linewidth]{local_reco.png}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Local Reconstruction}
+
+All the hits and segments are TrackingRecHits, the same object used in
+silicon tracking.
+
+\begin{center}
+\includegraphics[width=\linewidth]{family_tree.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Local Reconstruction Status}
+Completed before June Annual Review
+
+\begin{center}
+\includegraphics[width=0.5\linewidth]{recolocalmuon.png}
+\end{center}
+
+10 May Tutorial
+
+{\tt \scriptsize \href{https://uimfon.cern.ch/twiki/bin/view/CMS/MuTutorialSegments}{https://uimfon.cern.ch/twiki/bin/view/CMS/MuTutorialSegments}}
+\end{frame}
+
+\begin{frame}
+\frametitle{Stand-alone Muon Reconstruction}
+\begin{enumerate}
+\item CosmicMuonSeedGenerator constructs TrajectorySeeds out of
+matched segments (TrajectorySeed is the same object used by silicon
+tracking)
+\item StandAloneMuonProducer performs the fit and creates reco::Tracks
+(same object as silicon tracking)
+\end{enumerate}
+
+\vfill
+SteppingHelixPropagatorESProducer is the simplest track/errors
+propagator through material and non-uniform magnetic field.  Two
+alternatives are in development.
+
+\vfill
+9 May talk on propagation by Nicola Amapane
+
+{\tt \scriptsize \href{http://indico.cern.ch/conferenceDisplay.py?confId=1929}{http://indico.cern.ch/conferenceDisplay.py?confId=1929}}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Stand-alone Reconstruction Status}
+
+6 July Tutorial: ``not yet a reliable tool.  We are working on it!''
+
+{\tt \scriptsize \href{https://twiki.cern.ch/twiki/bin/view/CMS/July06MuonReco}{https://twiki.cern.ch/twiki/bin/view/CMS/July06MuonReco}}
+
+\vfill
+\begin{columns}
+\column{0.5\linewidth}
+
+22 August PRS/mu:
+
+\vspace{0.25 cm}
+``seems to be basically working in all muon detectors!''
+\begin{center}
+and \mbox{\hspace{2 cm}}
+\end{center}
+``formally working''
+
+\column{0.5\linewidth}
+\includegraphics[width=\linewidth]{recomuon.png}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Combining Muon Tracks with Silicon Tracks}
+
+What I can determine from the code:
+\begin{itemize}
+\item GlobalMuonProducer inputs stand-alone tracks and outputs reco::Muons.
+\item reco::Muon contains references to stand-alone muon track, silicon-only track, and combined track.
+\item The actual work is done by these classes:
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=0.9\linewidth]{globaltrackfinder.png}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Global Muon Fit Status}
+\begin{center}
+Probably a work in progress.
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Actively-pursued Alternative}
+
+UCSB (Claudio Campagnari, Dmitriy Kovalskyi, Slava Krutelyov, Jacob
+Ribnik) wish to simplify the process, replacing
+
+\begin{center}
+stand-alone muon track $+$ silicon-only track $\longrightarrow$ global track
+\end{center}
+
+with
+
+\begin{center}
+silicon-only track $+$ muon segments $\longrightarrow$ global track
+\end{center}
+
+\vfill See Dmitriy Kovalskyi's talk at 22 August PRS/mu meeting
+{\tt \scriptsize \href{http://indico.cern.ch/conferenceDisplay.py?confId=5292}{http://indico.cern.ch/conferenceDisplay.py?confId=5292}}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Where to find things}
+
+\begin{itemize}\setlength{\itemsep}{0.25 cm}
+\item There are {\it no} CMS-NOTES (except 2006/010 for ORCA)
+
+\item The PRS/mu group meets every other Tuesday (most recently 5 September) 10:30--12:30 our time
+
+{\tt \scriptsize \href{http://indico.cern.ch/categoryDisplay.py?categId=25}{http://indico.cern.ch/categoryDisplay.py?categId=25}}
+
+\item June 2006 Annual Review
+
+{\tt \scriptsize \href{http://indico.cern.ch/conferenceDisplay.py?confId=3247}{http://indico.cern.ch/conferenceDisplay.py?confId=3247}}
+
+\item Muon Software TWiki ($\rightarrow$ tutorials)
+
+{\tt \scriptsize \href{https://uimon.cern.ch/twiki/bin/view/CMS/MuonSW}{https://uimon.cern.ch/twiki/bin/view/CMS/MuonSW}}
+
+\item Doxygen Muon Overview (only lists packages)
+
+{\tt \scriptsize \href{https://uimon.cern.ch/twiki/bin/view/CMS/MuonSW}{https://uimon.cern.ch/twiki/bin/view/CMS/MuonSW}}
+
+\end{itemize}
+\label{numpages}
+\end{frame}
+
+\end{document}
